@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          parent_slug: string | null
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          parent_slug?: string | null
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_slug?: string | null
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          brand: string | null
+          category_slug: string
+          created_at: string
+          description: string | null
+          discount_price: number | null
+          id: string
+          images: string[]
+          is_featured: boolean | null
+          is_flash_sale: boolean | null
+          is_new: boolean | null
+          name: string
+          price: number
+          product_id: string
+          rating: number | null
+          reviews_count: number | null
+          sku: string | null
+          slug: string
+          specs: Json | null
+          stock: number
+          subcategory_slug: string | null
+          tags: string[] | null
+          video_url: string | null
+          warranty: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category_slug: string
+          created_at?: string
+          description?: string | null
+          discount_price?: number | null
+          id?: string
+          images?: string[]
+          is_featured?: boolean | null
+          is_flash_sale?: boolean | null
+          is_new?: boolean | null
+          name: string
+          price: number
+          product_id: string
+          rating?: number | null
+          reviews_count?: number | null
+          sku?: string | null
+          slug: string
+          specs?: Json | null
+          stock?: number
+          subcategory_slug?: string | null
+          tags?: string[] | null
+          video_url?: string | null
+          warranty?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category_slug?: string
+          created_at?: string
+          description?: string | null
+          discount_price?: number | null
+          id?: string
+          images?: string[]
+          is_featured?: boolean | null
+          is_flash_sale?: boolean | null
+          is_new?: boolean | null
+          name?: string
+          price?: number
+          product_id?: string
+          rating?: number | null
+          reviews_count?: number | null
+          sku?: string | null
+          slug?: string
+          specs?: Json | null
+          stock?: number
+          subcategory_slug?: string | null
+          tags?: string[] | null
+          video_url?: string | null
+          warranty?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "products_subcategory_slug_fkey"
+            columns: ["subcategory_slug"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
