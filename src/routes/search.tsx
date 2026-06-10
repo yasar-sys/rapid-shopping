@@ -8,9 +8,9 @@ export const Route = createFileRoute("/search")({
   validateSearch: z.object({ q: z.string().optional() }),
   loaderDeps: ({ search }) => ({ q: search.q ?? "" }),
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery()),
-  head: ({ loaderData: _ld, params: _p, match }) => ({
+  head: () => ({
     meta: [
-      { title: `Search${(match as { search?: { q?: string } } | undefined)?.search?.q ? `: ${(match as { search?: { q?: string } }).search!.q}` : ""} — Rapid Shopping` },
+      { title: "Search — Rapid Shopping" },
       { name: "robots", content: "noindex" },
     ],
   }),
