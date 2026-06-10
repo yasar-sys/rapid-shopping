@@ -83,11 +83,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Rapid Shopping — Electronics, Gadgets & Kitchen in Bangladesh" },
       { name: "description", content: "Shop the latest smartphones, laptops, smartwatches, gaming gear and kitchen appliances at Rapid Shopping. Fast delivery across Bangladesh." },
       { name: "author", content: "Rapid Shopping" },
-      { property: "og:title", content: "Rapid Shopping — Electronics, Gadgets & Kitchen" },
-      { property: "og:description", content: "Premium electronics and home essentials delivered fast across Bangladesh." },
+      { property: "og:title", content: "Rapid Shopping — Electronics, Gadgets & Kitchen in Bangladesh" },
+      { property: "og:description", content: "Shop the latest smartphones, laptops, smartwatches, gaming gear and kitchen appliances at Rapid Shopping. Fast delivery across Bangladesh." },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Rapid Shopping" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Rapid Shopping — Electronics, Gadgets & Kitchen in Bangladesh" },
+      { name: "twitter:description", content: "Shop the latest smartphones, laptops, smartwatches, gaming gear and kitchen appliances at Rapid Shopping. Fast delivery across Bangladesh." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/03585426-f3f1-4827-942e-87355cd3d263/id-preview-0a564dfe--af188209-5dbe-4685-860e-1b6ad59387cd.lovable.app-1781102515675.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/03585426-f3f1-4827-942e-87355cd3d263/id-preview-0a564dfe--af188209-5dbe-4685-860e-1b6ad59387cd.lovable.app-1781102515675.png" },
     ],
     links: [
       {
