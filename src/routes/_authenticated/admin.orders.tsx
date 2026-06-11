@@ -1,3 +1,5 @@
+import type { Database } from "@/integrations/supabase/types";
+type OrderStatus = Database["public"]["Enums"]["order_status"];
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -23,9 +25,10 @@ function AdminOrders() {
   useEffect(() => { load(); }, []);
 
   const update = async (id: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    const s = status as OrderStatus;
+    const { error } = await supabase.from("orders").update({ status: s }).eq("id", id);
     if (error) return toast.error(error.message);
-    await supabase.from("order_events").insert({ order_id: id, status, message: `Status changed to ${status}` });
+    await supabase.from("order_events").insert({ order_id: id, status: s, message: `Status changed to ${status}` });
     toast.success("Updated");
     load();
   };
