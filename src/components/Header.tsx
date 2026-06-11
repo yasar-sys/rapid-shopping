@@ -1,13 +1,16 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ShoppingCart, Search, Menu, Zap } from "lucide-react";
+import { ShoppingCart, Search, Menu, Zap, User as UserIcon, Package, LogOut, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
+import { useAuth } from "@/lib/auth";
 
 export function Header() {
   const { count } = useCart();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user, isAdmin, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +82,28 @@ export function Header() {
             </span>
           )}
         </Link>
+
+        {user ? (
+          <div className="relative">
+            <button onClick={() => setMenuOpen((v) => !v)} className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-primary/10 transition" aria-label="Account">
+              <UserIcon className="h-5 w-5" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-[var(--shadow-card)] z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border text-xs text-muted-foreground truncate">{user.email}</div>
+                  <Link to="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted"><UserIcon className="h-4 w-4" /> My account</Link>
+                  <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted"><Package className="h-4 w-4" /> My orders</Link>
+                  {isAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted text-secondary font-medium"><ShieldCheck className="h-4 w-4" /> Admin panel</Link>}
+                  <button onClick={async () => { await signOut(); setMenuOpen(false); navigate({ to: "/" }); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted text-destructive border-t border-border"><LogOut className="h-4 w-4" /> Sign out</button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <Link to="/auth" className="hidden sm:inline-flex h-10 px-4 items-center rounded-full text-sm font-medium bg-foreground text-background hover:opacity-90 transition">Sign in</Link>
+        )}
 
         <button className="md:hidden h-10 w-10 grid place-items-center rounded-full bg-muted" aria-label="Menu">
           <Menu className="h-5 w-5" />

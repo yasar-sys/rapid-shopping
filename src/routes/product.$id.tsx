@@ -6,6 +6,7 @@ import { discountPct, effectivePrice, productByIdQuery, productsQuery, resolveIm
 import { formatBDT } from "@/lib/format";
 import { useCart } from "@/lib/cart";
 import { ProductCard } from "@/components/ProductCard";
+import { Reviews } from "@/components/Reviews";
 
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ context, params }) => {
@@ -209,6 +210,8 @@ function ProductPage() {
           </div>
         </section>
       )}
+
+      <Reviews productId={p.product_id} />
     </div>
   );
 }
