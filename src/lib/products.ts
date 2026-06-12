@@ -1,30 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { queryOptions } from "@tanstack/react-query";
 
-import phone from "@/assets/p-phone.jpg";
-import earbuds from "@/assets/p-earbuds.jpg";
-import laptop from "@/assets/p-laptop.jpg";
-import watch from "@/assets/p-watch.jpg";
-import mouse from "@/assets/p-mouse.jpg";
-import powerbank from "@/assets/p-powerbank.jpg";
-import cooker from "@/assets/p-cooker.jpg";
-import blender from "@/assets/p-blender.jpg";
-
-const imageMap: Record<string, string> = {
-  "p-phone.jpg": phone,
-  "p-earbuds.jpg": earbuds,
-  "p-laptop.jpg": laptop,
-  "p-watch.jpg": watch,
-  "p-mouse.jpg": mouse,
-  "p-powerbank.jpg": powerbank,
-  "p-cooker.jpg": cooker,
-  "p-blender.jpg": blender,
-};
-
-export const resolveImage = (src: string): string => {
-  const key = src.split("/").pop() ?? "";
-  return imageMap[key] ?? src;
-};
+// Product images are stored as full CDN URLs (Lovable Assets) in the database.
+// This helper exists for backwards-compatibility and simply returns the URL.
+export const resolveImage = (src: string): string => src;
 
 export interface Product {
   id: string;
