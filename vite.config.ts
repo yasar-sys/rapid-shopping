@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // On Vercel, Nitro auto-detects the `vercel` preset from the VERCEL env var
+  // and writes the Build Output API tree to `.vercel/output/`. Inside a
+  // Lovable build this override is ignored and the Cloudflare preset wins.
+  nitro: process.env.VERCEL ? { preset: "vercel" } : undefined,
 });
