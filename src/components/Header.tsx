@@ -3,6 +3,7 @@ import { ShoppingCart, Search, Menu, Zap, User as UserIcon, Package, LogOut, Shi
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import logoAsset from "@/assets/logo.jpg.asset.json";
 
 export function Header() {
   const { count } = useCart();
@@ -42,9 +43,13 @@ export function Header() {
 
       <div className="container mx-auto px-4 h-16 flex items-center gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="h-9 w-9 rounded-lg bg-[image:var(--gradient-primary)] grid place-items-center text-primary-foreground font-bold shadow-[var(--shadow-soft)]">
-            R
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="Rapid Shopping logo"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-lg object-cover shadow-[var(--shadow-soft)]"
+          />
           <div className="leading-tight">
             <div className="font-bold text-base text-foreground">Rapid<span className="text-primary">Shopping</span></div>
             <div className="text-[10px] text-muted-foreground -mt-0.5">Faster than your craving</div>
