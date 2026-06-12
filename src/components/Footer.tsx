@@ -24,6 +24,8 @@ export function Footer() {
         <div>
           <h4 className="font-semibold mb-3 text-sm uppercase tracking-wider">Help</h4>
           <ul className="space-y-2 text-sm text-secondary-foreground/70">
+            <li><a href="mailto:rapidshopping.shop@gmail.com" className="hover:text-accent">rapidshopping.shop@gmail.com</a></li>
+            <li><a href="https://www.facebook.com/share/1BG433sPKG/" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Facebook Page</a></li>
             <li>Order Tracking</li>
             <li>Returns & Warranty</li>
             <li>Contact Support</li>
