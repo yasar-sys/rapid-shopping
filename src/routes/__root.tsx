@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "../lib/cart";
 import { AuthProvider } from "../lib/auth";
+import { ThemeProvider } from "../lib/theme";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { Toaster } from "sonner";
@@ -138,6 +139,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <CartProvider>
           <div className="flex min-h-screen flex-col">
@@ -150,6 +152,7 @@ function RootComponent() {
           <Toaster richColors position="top-right" />
         </CartProvider>
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

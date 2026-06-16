@@ -1,8 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ShoppingCart, Search, Menu, Zap, User as UserIcon, Package, LogOut, ShieldCheck } from "lucide-react";
+import { ShoppingCart, Search, Menu, Zap, User as UserIcon, Package, LogOut, ShieldCheck, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 import logoAsset from "@/assets/logo.jpg.asset.json";
 
 export function Header() {
@@ -11,6 +12,7 @@ export function Header() {
   const [q, setQ] = useState("");
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAdmin, signOut } = useAuth();
+  const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const submit = (e: React.FormEvent) => {
@@ -87,6 +89,10 @@ export function Header() {
             </span>
           )}
         </Link>
+
+        <button onClick={toggle} aria-label="Toggle theme" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-primary/10 transition">
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
 
         {user ? (
           <div className="relative">
