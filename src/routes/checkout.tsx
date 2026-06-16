@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, User as UserIcon, Phone, MapPin, MessageSquare, Hourglass } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -19,25 +19,27 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
-  const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [placedId, setPlacedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pay, setPay] = useState("cod");
-  const [form, setForm] = useState({ name: "", phone: "", email: "", street: "", city: "", district: "" });
+  const [pay] = useState("cod");
+  const [delivery, setDelivery] = useState<"outside" | "inside">("inside");
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", notes: "" });
 
   useEffect(() => {
     if (user?.email) setForm((f) => ({ ...f, email: f.email || user.email! }));
   }, [user]);
 
+  // Offer countdown — 15 minutes from page load
+  const [secondsLeft, setSecondsLeft] = useState(15 * 60);
   useEffect(() => {
-    if (!loading && !user && items.length > 0) {
-      toast.info("Please sign in to place your order");
-      navigate({ to: "/auth" });
-    }
-  }, [loading, user, items.length, navigate]);
+    const t = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
 
-  const shipping = subtotal > 2000 || subtotal === 0 ? 0 : 80;
+  const shipping = delivery === "inside" ? 65 : 110;
   const total = subtotal + shipping;
 
   if (items.length === 0 && !placedId) {
@@ -57,10 +59,10 @@ function CheckoutPage() {
         </div>
         <h1 className="mt-5 text-2xl font-bold">Order placed!</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Thanks for shopping with Rapid Shopping. Track your delivery in real time below.
+          Thanks for shopping with Rapid Shopping. We will call you on the number you provided to confirm.
         </p>
         <div className="mt-6 flex gap-3 justify-center">
-          <Link to="/order/$id" params={{ id: placedId }} className="inline-flex h-11 px-6 items-center rounded-full bg-[image:var(--gradient-primary)] text-primary-foreground font-semibold">Track order</Link>
+          {user && <Link to="/order/$id" params={{ id: placedId }} className="inline-flex h-11 px-6 items-center rounded-full bg-[image:var(--gradient-primary)] text-primary-foreground font-semibold">Track order</Link>}
           <Link to="/" className="inline-flex h-11 px-6 items-center rounded-full border border-border font-semibold">Keep shopping</Link>
         </div>
       </div>
@@ -69,16 +71,17 @@ function CheckoutPage() {
 
   const place = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     setBusy(true);
     try {
+      const guestEmail = form.email?.trim() || `guest+${form.phone.replace(/\D/g, "")}@rapidshopping.shop`;
       const orderNumber = `RS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const { data: order, error } = await supabase.from("orders").insert({
         order_number: orderNumber,
-        user_id: user.id,
-        email: form.email,
+        user_id: user?.id ?? null,
+        email: guestEmail,
         phone: form.phone,
-        shipping_address: { full_name: form.name, phone: form.phone, street: form.street, city: form.city, district: form.district },
+        shipping_address: { full_name: form.name, phone: form.phone, address: form.address, delivery_zone: delivery },
+        notes: form.notes || null,
         subtotal,
         shipping_fee: shipping,
         total,
@@ -112,68 +115,99 @@ function CheckoutPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Checkout</h1>
-      <form onSubmit={place} className="mt-8 grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-semibold text-lg mb-4">Shipping Address</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <input required placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary" />
-              <input required type="tel" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary" />
-              <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary sm:col-span-2" />
-              <input required placeholder="Street address" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary sm:col-span-2" />
-              <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary" />
-              <input required placeholder="District" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} className="h-11 px-3 rounded-md border border-border outline-none focus:border-primary" />
-            </div>
-          </section>
+    <div className="container mx-auto px-4 py-6 max-w-xl">
+      <h1 className="text-2xl font-bold text-center text-primary">Place Your Order</h1>
+      <p className="text-center text-xs text-muted-foreground mt-1">No account needed — just fill the form below.</p>
 
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-semibold text-lg mb-4">Payment Method</h2>
-            <div className="space-y-2">
-              {[
-                ["cod", "Cash on Delivery", "Pay when you receive your order"],
-                ["card", "Card (Stripe)", "Coming soon — secure card payments"],
-                ["bkash", "bKash", "Coming soon"],
-                ["nagad", "Nagad", "Coming soon"],
-              ].map(([id, t, s]) => (
-                <label key={id} className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${pay === id ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"} ${id !== "cod" ? "opacity-60" : ""}`}>
-                  <input type="radio" name="pay" value={id} checked={pay === id} disabled={id !== "cod"} onChange={() => setPay(id)} className="mt-1 accent-[var(--color-primary)]" />
-                  <div>
-                    <div className="font-medium text-foreground text-sm">{t}</div>
-                    <div className="text-xs text-muted-foreground">{s}</div>
-                  </div>
-                </label>
-              ))}
+      <form onSubmit={place} className="mt-6 space-y-3">
+        {/* Contact */}
+        <Field icon={<UserIcon className="h-4 w-4" />}>
+          <input required placeholder="Your name / আপনার নাম" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full bg-transparent outline-none text-sm" />
+        </Field>
+        <Field icon={<Phone className="h-4 w-4" />}>
+          <input required type="tel" placeholder="Phone number / ফোন নাম্বার" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full bg-transparent outline-none text-sm" />
+        </Field>
+        <Field icon={<MapPin className="h-4 w-4" />}>
+          <input required placeholder="House/flat, road, area, upazila, district" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full bg-transparent outline-none text-sm" />
+        </Field>
+
+        {/* Items preview */}
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-3">
+          {items.map((i) => (
+            <div key={i.productId} className="flex items-center gap-3">
+              <img src={i.image} alt={i.name} className="h-14 w-14 rounded-lg object-cover bg-muted" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-primary line-clamp-2">{i.name}</div>
+                <div className="text-xs text-muted-foreground">Qty {i.qty}</div>
+              </div>
+              <div className="text-sm font-bold text-primary">{formatBDT(i.qty * i.price)}</div>
             </div>
-          </section>
+          ))}
         </div>
 
-        <aside className="rounded-xl border border-border bg-card p-6 h-fit sticky top-24 shadow-[var(--shadow-card)]">
-          <h2 className="font-semibold text-lg">Order Summary</h2>
-          <div className="mt-4 space-y-3 max-h-64 overflow-auto">
-            {items.map((i) => (
-              <div key={i.productId} className="flex gap-3 text-sm">
-                <img src={i.image} alt={i.name} width={48} height={48} className="h-12 w-12 rounded-md object-cover bg-muted" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium line-clamp-1">{i.name}</div>
-                  <div className="text-xs text-muted-foreground">Qty {i.qty}</div>
-                </div>
-                <div className="font-medium">{formatBDT(i.qty * i.price)}</div>
-              </div>
-            ))}
+        {/* Delivery selection */}
+        <div className="text-sm font-semibold text-primary pt-2">Select delivery charge…</div>
+        <div className="space-y-2">
+          <DeliveryOption checked={delivery === "outside"} onSelect={() => setDelivery("outside")} label="Outside Dhaka City / ঢাকা সিটির বাইরে" price={110} />
+          <DeliveryOption checked={delivery === "inside"} onSelect={() => setDelivery("inside")} label="Inside Dhaka City / ঢাকা সিটির মধ্যে" price={65} />
+        </div>
+
+        {/* Totals */}
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm space-y-1.5">
+          <Row label="Subtotal" value={formatBDT(subtotal)} />
+          <Row label="Delivery Charge" value={formatBDT(shipping)} />
+          <div className="border-t border-primary/20 my-1" />
+          <Row label="Total" value={formatBDT(total)} bold />
+        </div>
+
+        <Field icon={<MessageSquare className="h-4 w-4" />}>
+          <input placeholder="Any note for us? (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full bg-transparent outline-none text-sm" />
+        </Field>
+
+        {/* Urgency */}
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-center">
+          <div className="flex items-center justify-center gap-2 text-destructive text-xs font-medium">
+            <Hourglass className="h-4 w-4" /> Hurry! The offer ends soon
           </div>
-          <div className="my-4 border-t border-border" />
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatBDT(subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? "Free" : formatBDT(shipping)}</span></div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-border flex justify-between text-lg font-bold"><span>Total</span><span>{formatBDT(total)}</span></div>
-          <button type="submit" disabled={busy} className="mt-5 w-full h-12 rounded-full bg-[image:var(--gradient-primary)] text-primary-foreground font-semibold shadow-[var(--shadow-soft)] disabled:opacity-50">
-            {busy ? "Placing…" : "Place Order"}
-          </button>
-        </aside>
+          <div className="text-2xl font-bold text-destructive mt-1 tabular-nums">{mm}:{ss}</div>
+        </div>
+
+        <button type="submit" disabled={busy} className="w-full h-12 rounded-full bg-[image:var(--gradient-primary)] text-primary-foreground font-semibold shadow-[var(--shadow-soft)] disabled:opacity-50">
+          {busy ? "Placing…" : `Confirm Order — ${formatBDT(total)}`}
+        </button>
+        <p className="text-[11px] text-center text-muted-foreground">Cash on delivery. We'll call to confirm before shipping.</p>
       </form>
+    </div>
+  );
+}
+
+function Field({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 h-12">
+      <span className="h-8 w-8 rounded-full bg-primary/15 text-primary grid place-items-center shrink-0">{icon}</span>
+      {children}
+    </div>
+  );
+}
+
+function DeliveryOption({ checked, onSelect, label, price }: { checked: boolean; onSelect: () => void; label: string; price: number }) {
+  return (
+    <label className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${checked ? "border-primary bg-primary/10" : "border-primary/30 bg-primary/5 hover:border-primary"}`}>
+      <span className={`h-5 w-5 rounded-full border-2 grid place-items-center ${checked ? "border-primary" : "border-primary/40"}`}>
+        {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+      </span>
+      <input type="radio" name="delivery" checked={checked} onChange={onSelect} className="sr-only" />
+      <span className="flex-1 text-sm font-medium text-primary">{label}</span>
+      <span className="text-sm font-bold text-primary">{price}Tk</span>
+    </label>
+  );
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "text-base font-bold text-primary" : "text-primary/80"}`}>
+      <span>{label}</span>
+      <span>{value}</span>
     </div>
   );
 }
