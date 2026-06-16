@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Smartphone, Laptop, Watch, Headphones, Gamepad2, BatteryCharging, ChefHat, Blend, Truck, ShieldCheck, RotateCcw, Headset } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Smartphone, Laptop, Watch, Headphones, Gamepad2, BatteryCharging, ChefHat, Blend, Truck, ShieldCheck, Headset } from "lucide-react";
 import heroImg from "@/assets/hero.jpg";
-import { categoriesQuery, productsQuery } from "@/lib/products";
+import { categoriesQuery, productsQuery, effectivePrice } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
+import { formatBDT } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,10 +32,33 @@ function Index() {
   const { data: products } = useSuspenseQuery(productsQuery());
   const { data: categories } = useSuspenseQuery(categoriesQuery());
 
-  const featured = products.filter((p) => p.is_featured).slice(0, 8);
-  const flash = products.filter((p) => p.is_flash_sale).slice(0, 4);
-  const newArrivals = products.filter((p) => p.is_new).slice(0, 4);
-  const subCats = categories.filter((c) => c.parent_slug);
+  const featuredAll = products.filter((p) => p.is_featured);
+  const featured = featuredAll.length ? featuredAll : products;
+  const flash = products.filter((p) => p.is_flash_sale);
+  const newArrivals = products.filter((p) => p.is_new);
+  const allCats = categories;
+
+  // Rotating product spotlight inside the hero "window"
+  const rotatePool = products.slice(0, 12);
+  const [spotIdx, setSpotIdx] = useState(0);
+  useEffect(() => {
+    if (rotatePool.length < 2) return;
+    const t = setInterval(() => setSpotIdx((i) => (i + 1) % rotatePool.length), 2200);
+    return () => clearInterval(t);
+  }, [rotatePool.length]);
+  const spot = rotatePool[spotIdx];
+
+  // Flash sale live countdown — ends today at midnight local
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const endOfDay = (() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d.getTime(); })();
+  const diff = Math.max(0, endOfDay - now);
+  const hh = String(Math.floor(diff / 3_600_000)).padStart(2, "0");
+  const mm = String(Math.floor((diff % 3_600_000) / 60_000)).padStart(2, "0");
+  const ss = String(Math.floor((diff % 60_000) / 1000)).padStart(2, "0");
 
   return (
     <div className="bg-background">
@@ -70,7 +95,7 @@ function Index() {
               </Link>
             </div>
             <div className="mt-10 grid grid-cols-3 gap-4 max-w-md text-white/90">
-              <div><div className="text-2xl font-bold">10K+</div><div className="text-xs text-white/60">Products</div></div>
+              <div><div className="text-2xl font-bold">100+</div><div className="text-xs text-white/60">Products</div></div>
               <div><div className="text-2xl font-bold">64</div><div className="text-xs text-white/60">Districts</div></div>
               <div><div className="text-2xl font-bold">4.8★</div><div className="text-xs text-white/60">Avg. Rating</div></div>
             </div>
@@ -83,6 +108,21 @@ function Index() {
               height={900}
               className="w-full h-auto rounded-2xl shadow-[var(--shadow-elevated)]"
             />
+            {spot && (
+              <Link
+                to="/product/$id"
+                params={{ id: spot.product_id }}
+                className="absolute bottom-4 left-4 right-4 md:left-6 md:right-auto md:w-72 rounded-2xl bg-background/95 backdrop-blur border border-white/40 p-3 shadow-[var(--shadow-elevated)] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                key={spot.id}
+              >
+                <img src={spot.images?.[0]} alt={spot.name} className="h-14 w-14 rounded-lg object-cover bg-muted shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] uppercase tracking-wider text-accent font-bold">Trending now</div>
+                  <div className="text-sm font-semibold text-foreground line-clamp-1">{spot.name}</div>
+                  <div className="text-sm font-bold text-primary">{formatBDT(effectivePrice(spot))}</div>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -93,8 +133,8 @@ function Index() {
           {[
             [Truck, "Fast Delivery", "1–3 days nationwide"],
             [ShieldCheck, "Genuine Products", "Official warranty"],
-            [RotateCcw, "7-Day Returns", "Hassle-free policy"],
             [Headset, "24/7 Support", "Talk to a human"],
+            [ShieldCheck, "Cash on Delivery", "Pay when you receive"],
           ].map(([Icon, t, s]) => {
             const I = Icon as React.ComponentType<{ className?: string }>;
             return (
@@ -121,7 +161,7 @@ function Index() {
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {subCats.map((c) => {
+          {allCats.map((c) => {
             const Icon = iconMap[c.icon ?? ""] ?? Smartphone;
             return (
               <Link
@@ -150,7 +190,7 @@ function Index() {
                 <h2 className="text-2xl md:text-3xl font-bold mt-1">Up to 30% off — today only</h2>
               </div>
               <div className="hidden sm:flex gap-2 text-center">
-                {["12", "47", "39"].map((v, i) => (
+                {[hh, mm, ss].map((v, i) => (
                   <div key={i} className="bg-white/10 backdrop-blur rounded-lg px-3 py-2 min-w-[52px]">
                     <div className="font-bold text-lg">{v}</div>
                     <div className="text-[10px] text-secondary-foreground/60 uppercase">{["hr","min","sec"][i]}</div>
@@ -159,7 +199,7 @@ function Index() {
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {flash.map((p) => <ProductCard key={p.id} p={p} />)}
+              {flash.slice(0, 8).map((p) => <ProductCard key={p.id} p={p} />)}
             </div>
           </div>
         </section>
@@ -169,7 +209,7 @@ function Index() {
       <section className="container mx-auto px-4 pb-14">
         <div className="flex items-end justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">Featured Products</h2>
-          <Link to="/category/electronics" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+          <Link to="/products" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
             View all <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -181,7 +221,10 @@ function Index() {
       {/* NEW ARRIVALS */}
       {newArrivals.length > 0 && (
         <section className="container mx-auto px-4 pb-20">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">New Arrivals</h2>
+          <div className="flex items-end justify-between mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">New Arrivals</h2>
+            <Link to="/products" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">View all <ArrowRight className="h-4 w-4" /></Link>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {newArrivals.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
